@@ -803,7 +803,8 @@ export class IDBBatchAtomicVFS extends VFS.Base {
 
 function openDatabase(idbDatabaseName) {
   return new Promise((resolve, reject) => {
-    const request = globalThis.indexedDB.open(idbDatabaseName, 5);
+    // NOTE: I'm from the future, where we have the version 6 of IDB (this will probably get squashed during reconciliation)
+    const request = globalThis.indexedDB.open(idbDatabaseName, 6);
     request.addEventListener('upgradeneeded', function() {
       const blocks = request.result.createObjectStore('blocks', {
         keyPath: ['path', 'offset', 'version']
