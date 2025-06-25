@@ -69,7 +69,7 @@ EMFLAGS_COMMON = \
 
 EMFLAGS_DEBUG = \
 	-s ASSERTIONS=1 \
-	-g \
+	-g -O1 \
 	$(EMFLAGS_COMMON)
 
 EMFLAGS_DIST = \
