@@ -6,5 +6,15 @@
   "setValue",
   "lengthBytesUTF8",
   "stringToUTF8",
-  "UTF8ToString"
+  "stringToUTF16",
+  "stringToUTF32",
+  "AsciiToString",
+  "HEAP32",
+  "HEAPU8",
+  "UTF8ToString",
+  "UTF16ToString",
+  "UTF32ToString",
+  "intArrayFromString",
+  "intArrayToString",
+  "writeArrayToMemory"
 ]
