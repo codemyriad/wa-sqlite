@@ -17,8 +17,6 @@
   "vpppip_async",
   "ippppi",
   "ippppi_async",
-  "vpippj",
-  "vpippj_async",
   "ippppij",
   "ippppij_async",
   "ipppiii",
@@ -30,5 +28,7 @@
   "ipppppip",
   "ipppppip_async",
   "ipppiiip",
-  "ipppiiip_async"
+  "ipppiiip_async",
+  "vppippii",
+  "vppippii_async"
 ]

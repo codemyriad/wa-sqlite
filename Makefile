@@ -1,5 +1,5 @@
 # dependencies
-SQLITE_VERSION = version-3.45.0
+SQLITE_VERSION = version-3.46.0
 SQLITE_TARBALL_URL = https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=${SQLITE_VERSION}
 
 EXTENSION_FUNCTIONS = extension-functions.c
@@ -18,6 +18,7 @@ CFILES = \
 	main.c \
 	libauthorizer.c \
 	libfunction.c \
+	libhook.c \
 	libprogress.c \
 	libvfs.c \
 	$(CFILES_EXTRA)
@@ -25,6 +26,7 @@ CFILES = \
 JSFILES = \
 	src/libauthorizer.js \
 	src/libfunction.js \
+	src/libhook.js \
 	src/libprogress.js \
 	src/libvfs.js
 
@@ -92,6 +94,7 @@ EMFLAGS_LIBRARIES = \
 	--js-library src/libadapters.js \
 	--post-js src/libauthorizer.js \
 	--post-js src/libfunction.js \
+	--post-js src/libhook.js \
 	--post-js src/libprogress.js \
 	--post-js src/libvfs.js
 

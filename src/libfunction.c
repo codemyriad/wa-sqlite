@@ -41,15 +41,3 @@ int EMSCRIPTEN_KEEPALIVE libfunction_create_function(
       xFunc ? &libfunction_xFunc : NULL, xStep ? &libfunction_xStep : NULL,
       xFinal ? &libfunction_xFinal : NULL, &sqlite3_free);
 }
-
-static void libfunction_xUpdateHook(void *pApp, int updateType,
-                                    const char *dbName, const char *tblName,
-                                    sqlite3_int64 rowid) {
-  // NOTE: the update callback is only called synchronously to avoid deadlocks
-  // in txns
-  vpippj(pApp, updateType, dbName, tblName, rowid);
-}
-
-void EMSCRIPTEN_KEEPALIVE libfunction_update_hook(sqlite3 *db, void *pApp) {
-  sqlite3_update_hook(db, &libfunction_xUpdateHook, pApp);
-}

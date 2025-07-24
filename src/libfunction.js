@@ -53,33 +53,6 @@
     }
     return result;
   };
-
-  /**
-   * Adapts the update hook callback to serve as a bridge between the C-side callback and the JS callback:
-   * - str pointer -> string 
-   * - legalized i64 (lo32, hi32) -> bigint
-   *
-   * @param {(updateType: 9 | 18 | 23, dbName: string, tblName: string, rowid: bigint) => void} f
-   * @returns {(updateType: number, dbName: number, tblName: number, lo32: number, hi32: number) => void}
-   */
-  const adaptHookCb = (f) => (ut, dbn, tbn, lo32, hi32) => {
-    const rowid = delegalize(lo32, hi32);
-    const dbName = Module.UTF8ToString(dbn)
-    const tblName = Module.UTF8ToString(tbn)
-    f(ut, dbName, tblName, rowid)
-  }
-
-  Module['updateHook'] = function(db, f) {
-    const key = Math.floor(Math.random() * 10000)
-    Module["setCallback"](key, adaptHookCb(f))
-
-    return ccall(
-      'libfunction_update_hook',
-      'void',
-      ['number', 'number'],
-      [db, key]
-    );
-  }
 })();
 
 // Emscripten "legalizes" 64-bit integer arguments by passing them as

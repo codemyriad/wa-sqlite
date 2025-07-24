@@ -9,13 +9,13 @@ const SIGNATURES = [
   'ipppip', // xFileControl, xRandomness, xGetLastError
   'vpppip', // xFunc, xStep
   'ippppi', // xDelete
-  'vpippj', // xUpdateHook NOTE: this should be called xPreUpdate
   'ippppij', // xRead, xWrite
   'ipppiii', // xShmLock
   'ippppip', // xAccess, xFullPathname
   'ippipppp', // xAuthorize
   'ipppppip', // xOpen
   'ipppiiip', // xShmMap
+  'vppippii', // xUpdateHook
 ];
 
 // This object will define the methods callable from WebAssembly.

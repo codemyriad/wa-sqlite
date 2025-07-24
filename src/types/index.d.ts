@@ -333,6 +333,14 @@ declare interface SQLiteAPI {
   changes(db): number;
 
   /**
+   * Reset all bindings on a prepared statement.
+   * @see https://www.sqlite.org/c3ref/clear_bindings.html
+   * @param stmt prepared statement pointer
+   * @returns `SQLITE_OK` (throws exception on error)
+   */
+  clear_bindings(stmt: number): number;
+
+  /**
    * Close database connection
    * @see https://www.sqlite.org/c3ref/close.html
    * @param db database pointer
@@ -451,12 +459,6 @@ declare interface SQLiteAPI {
    * @returns enumeration value for type
    */
   column_type(stmt: number, i: number): number;
-
-  update_hook(
-    db: number,
-    xUpdate:
-      (updateType: 9 | 18 | 23, dbName: string, tblName: string, rowid: bigint) => void
-  ): void;
 
   /**
    * Create or redefine SQL functions
@@ -778,6 +780,27 @@ declare interface SQLiteAPI {
    * (rejects on error)
    */
   step(stmt: number): Promise<number>;
+
+  /**
+  * Register an update hook
+  * 
+  * The callback is invoked whenever a row is updated, inserted, or deleted
+  * in a rowid table on this connection.
+  * @see https://www.sqlite.org/c3ref/update_hook.html
+  *
+  * updateType is one of:
+  * - SQLITE_DELETE: 9
+  * - SQLITE_INSERT: 18
+  * - SQLITE_UPDATE: 23
+  * @see https://www.sqlite.org/c3ref/c_alter_table.html
+  * 
+  * @param db database pointer
+  * @param callback
+  */
+  update_hook(
+    db: number,
+    xUpdate: (updateType: 9 | 18 | 23, dbName: string, tblName: string, rowid: bigint) => void
+  ): void;
 
   /**
    * Create a new `sqlite3_str` dynamic string instance
