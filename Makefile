@@ -1,6 +1,7 @@
 # dependencies
 SQLITE_VERSION = version-3.50.1
-SQLITE_TARBALL_URL = https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=${SQLITE_VERSION}
+# SQLITE_TARBALL_URL = https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=${SQLITE_VERSION}
+SQLITE_TARBALL = deps/tar/sqlite-$(SQLITE_VERSION).tar.gz
 
 EXTENSION_FUNCTIONS = extension-functions.c
 EXTENSION_FUNCTIONS_URL = https://www.sqlite.org/contrib/download/extension-functions.c?get=25
@@ -176,9 +177,17 @@ cache/$(EXTENSION_FUNCTIONS):
 clean-deps:
 	rm -rf deps
 
-deps/$(SQLITE_VERSION)/sqlite3.h deps/$(SQLITE_VERSION)/sqlite3.c:
+# deps/$(SQLITE_VERSION)/sqlite3.h deps/$(SQLITE_VERSION)/sqlite3.c:
+# 	mkdir -p cache/$(SQLITE_VERSION)
+# 	curl -LsS $(SQLITE_TARBALL_URL) | tar -xzf - -C cache/$(SQLITE_VERSION)/ --strip-components=1
+# 	mkdir -p deps/$(SQLITE_VERSION)
+# 	(cd deps/$(SQLITE_VERSION); ../../cache/$(SQLITE_VERSION)/configure --enable-all && make sqlite3.c)
+
+# TEMP: use the local tarball instead of downloading it
+# NOTE: there's no rule to make the tarball, (due to current constraints with SQLite repo) it should be handled elsewhere 
+deps/$(SQLITE_VERSION)/sqlite3.h deps/$(SQLITE_VERSION)/sqlite3.c: $(SQLITE_TARBALL)
 	mkdir -p cache/$(SQLITE_VERSION)
-	curl -LsS $(SQLITE_TARBALL_URL) | tar -xzf - -C cache/$(SQLITE_VERSION)/ --strip-components=1
+	tar -xzf $(SQLITE_TARBALL) -C cache/$(SQLITE_VERSION)/ --strip-components=1
 	mkdir -p deps/$(SQLITE_VERSION)
 	(cd deps/$(SQLITE_VERSION); ../../cache/$(SQLITE_VERSION)/configure --enable-all && make sqlite3.c)
 
