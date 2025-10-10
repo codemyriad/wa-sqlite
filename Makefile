@@ -15,9 +15,9 @@ CFILES_EXTRA = \
 CFILES = \
 	sqlite3-extra.c \
 	extension-functions.c \
+	main.c \
 	libauthorizer.c \
 	libfunction.c \
-	libmodule.c \
 	libprogress.c \
 	libvfs.c \
 	$(CFILES_EXTRA)
@@ -25,7 +25,6 @@ CFILES = \
 JSFILES = \
 	src/libauthorizer.js \
 	src/libfunction.js \
-	src/libmodule.js \
 	src/libprogress.js \
 	src/libvfs.js
 
@@ -39,6 +38,7 @@ vpath %.c $(dir.crsql)
 EXPORTED_FUNCTIONS = src/exported_functions.json
 EXPORTED_RUNTIME_METHODS = src/extra_exported_runtime_methods.json
 ASYNCIFY_IMPORTS = src/asyncify_imports.json
+ASYNCIFY_EXPORTS = src/asyncify_exports.json
 
 # intermediate files
 RS_LIB = crsql_bundle
@@ -82,7 +82,6 @@ EMFLAGS_DEBUG = \
 EMFLAGS_DIST = \
 	-O3 \
 	-flto \
-	--closure 1 \
 	$(EMFLAGS_COMMON)
 
 EMFLAGS_INTERFACES = \
@@ -90,11 +89,11 @@ EMFLAGS_INTERFACES = \
 	-s EXPORTED_RUNTIME_METHODS=@$(EXPORTED_RUNTIME_METHODS)
 
 EMFLAGS_LIBRARIES = \
-	--js-library src/libauthorizer.js \
-	--js-library src/libfunction.js \
-	--js-library src/libmodule.js \
-	--js-library src/libprogress.js \
-	--js-library src/libvfs.js
+	--js-library src/libadapters.js \
+	--post-js src/libauthorizer.js \
+	--post-js src/libfunction.js \
+	--post-js src/libprogress.js \
+	--post-js src/libvfs.js
 
 EMFLAGS_ASYNCIFY_COMMON = \
 	-s ASYNCIFY \
@@ -108,13 +107,20 @@ EMFLAGS_ASYNCIFY_DIST = \
 	$(EMFLAGS_ASYNCIFY_COMMON) \
 	-s ASYNCIFY_STACK_SIZE=16384
 
+EMFLAGS_JSPI = \
+	-s ASYNCIFY=2 \
+	-s ASYNCIFY_IMPORTS=@src/asyncify_imports.json \
+	-s ASYNCIFY_EXPORTS=@src/asyncify_exports.json
+
+# NOTE: The tests expect the default page size to be 8192 (not 4096 like the sqlite3 default)
 WASQLITE_EXTRA_DEFINES = \
 	-DSQLITE_EXTRA_INIT=core_init \
 	-DSQLITE_ENABLE_FTS5 \
 	-DSQLITE_OMIT_UTF16 \
 	-DSQLITE_ENABLE_BYTECODE_VTAB \
 	-DDEFAULT_CACHE_SIZE=8000 \
-	-DCRSQLITE_WASM
+	-DCRSQLITE_WASM \
+	-DSQLITE_DEFAULT_PAGE_SIZE=8192
 
 # https://www.sqlite.org/compile.html
 WASQLITE_DEFINES = \
@@ -145,12 +151,12 @@ crsqlite-extra: $(sqlite3.extra.c)
 
 .PHONY: clean
 clean:
-	rm -rf dist dist-xl debug tmp
+	rm -rf dist debug tmp
 	rm -f *.o
 
 .PHONY: spotless
 spotless:
-	rm -rf dist dist-xl debug tmp deps cache
+	rm -rf dist debug tmp deps cache
 
 ## cache
 .PHONY: clean-cache
@@ -165,8 +171,6 @@ cache/$(EXTENSION_FUNCTIONS):
 .PHONY: clean-deps
 clean-deps:
 	rm -rf deps
-
-.PHONY: deps
 
 deps/$(SQLITE_VERSION)/sqlite3.h deps/$(SQLITE_VERSION)/sqlite3.c:
 	mkdir -p cache/$(SQLITE_VERSION)
@@ -215,14 +219,14 @@ clean-debug:
 	rm -rf debug
 
 .PHONY: debug
-debug: debug/crsqlite-sync.mjs debug/crsqlite.mjs
+debug: debug/crsqlite-sync.mjs debug/crsqlite.mjs debug/crsqlite-jspi.mjs
 
 debug/crsqlite-sync.mjs: $(OBJ_FILES_DEBUG) $(JSFILES) $(RS_DEBUG_BC) $(EXPORTED_FUNCTIONS) $(EXPORTED_RUNTIME_METHODS)
 	mkdir -p debug
 	$(EMCC) $(EMFLAGS_DEBUG) \
 	  $(EMFLAGS_INTERFACES) \
 	  $(EMFLAGS_LIBRARIES) \
-		$(RS_WASM_TGT_DIR)/debug/deps/*.bc \
+	  $(RS_WASM_TGT_DIR)/debug/deps/*.bc \
 	  $(OBJ_FILES_DEBUG) -o $@
 
 debug/crsqlite.mjs: $(OBJ_FILES_DEBUG) $(JSFILES) $(RS_DEBUG_BC) $(EXPORTED_FUNCTIONS) $(EXPORTED_RUNTIME_METHODS) $(ASYNCIFY_IMPORTS)
@@ -231,7 +235,16 @@ debug/crsqlite.mjs: $(OBJ_FILES_DEBUG) $(JSFILES) $(RS_DEBUG_BC) $(EXPORTED_FUNC
 	  $(EMFLAGS_INTERFACES) \
 	  $(EMFLAGS_LIBRARIES) \
 	  $(EMFLAGS_ASYNCIFY_DEBUG) \
-		$(RS_WASM_TGT_DIR)/debug/deps/*.bc \
+	  $(RS_WASM_TGT_DIR)/debug/deps/*.bc \
+	  $(OBJ_FILES_DEBUG) -o $@
+
+debug/crsqlite-jspi.mjs: $(OBJ_FILES_DEBUG) $(JSFILES) $(RS_RELEASE_BC) $(EXPORTED_FUNCTIONS) $(EXPORTED_RUNTIME_METHODS) $(ASYNCIFY_IMPORTS)
+	mkdir -p debug
+	$(EMCC) $(EMFLAGS_DEBUG) \
+	  $(EMFLAGS_INTERFACES) \
+	  $(EMFLAGS_LIBRARIES) \
+	  $(EMFLAGS_JSPI) \
+	  $(RS_WASM_TGT_DIR)/release/deps/*.bc \
 	  $(OBJ_FILES_DEBUG) -o $@
 
 ## dist
@@ -240,7 +253,7 @@ clean-dist:
 	rm -rf dist
 
 .PHONY: dist
-dist: deps dist/crsqlite-sync.mjs dist/crsqlite.mjs
+dist: dist/crsqlite-sync.mjs dist/crsqlite.mjs dist/crsqlite-jspi.mjs
 
 FORCE: ;
 
@@ -249,7 +262,7 @@ dist/crsqlite-sync.mjs: $(OBJ_FILES_DIST) $(JSFILES) $(RS_RELEASE_BC) $(EXPORTED
 	$(EMCC) $(EMFLAGS_DIST) \
 	  $(EMFLAGS_INTERFACES) \
 	  $(EMFLAGS_LIBRARIES) \
-		$(RS_WASM_TGT_DIR)/release/deps/*.bc \
+	  $(RS_WASM_TGT_DIR)/release/deps/*.bc \
 	  $(OBJ_FILES_DIST) -o $@
 
 dist/crsqlite.mjs: $(OBJ_FILES_DIST) $(JSFILES) $(RS_RELEASE_BC) $(EXPORTED_FUNCTIONS) $(EXPORTED_RUNTIME_METHODS) $(ASYNCIFY_IMPORTS)
@@ -258,6 +271,14 @@ dist/crsqlite.mjs: $(OBJ_FILES_DIST) $(JSFILES) $(RS_RELEASE_BC) $(EXPORTED_FUNC
 	  $(EMFLAGS_INTERFACES) \
 	  $(EMFLAGS_LIBRARIES) \
 	  $(EMFLAGS_ASYNCIFY_DIST) \
-		$(RS_WASM_TGT_DIR)/release/deps/*.bc \
+	  $(RS_WASM_TGT_DIR)/release/deps/*.bc \
 	  $(OBJ_FILES_DIST) -o $@
 
+dist/crsqlite-jspi.mjs: $(OBJ_FILES_DIST) $(JSFILES) $(RS_RELEASE_BC) $(EXPORTED_FUNCTIONS) $(EXPORTED_RUNTIME_METHODS) $(ASYNCIFY_IMPORTS)
+	mkdir -p dist
+	$(EMCC) $(EMFLAGS_DIST) \
+	  $(EMFLAGS_INTERFACES) \
+	  $(EMFLAGS_LIBRARIES) \
+	  $(EMFLAGS_JSPI) \
+	  $(RS_WASM_TGT_DIR)/release/deps/*.bc \
+	  $(OBJ_FILES_DIST) -o $@
