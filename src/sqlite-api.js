@@ -34,11 +34,12 @@ export function Factory(Module) {
   const tmp = Module._malloc(8);
   const tmpPtr = [tmp, tmp + 4];
 
+  const textEncoder = new TextEncoder();
   // Convert a JS string to a C string. sqlite3_malloc is used to allocate
   // memory (use sqlite3_free to deallocate).
   function createUTF8(s) {
     if (typeof s !== 'string') return 0;
-    const utf8 = new TextEncoder().encode(s);
+    const utf8 = textEncoder.encode(s);
     const zts = Module._sqlite3_malloc(utf8.byteLength + 1);
     Module.HEAPU8.set(utf8, zts);
     Module.HEAPU8[zts + utf8.byteLength] = 0;
@@ -118,6 +119,8 @@ export function Factory(Module) {
         }
       case 'string':
         return sqlite3.bind_text(stmt, i, value);
+      case "boolean":
+        return sqlite3.bind_int(stmt, i, value ? 1 : 0);
       default:
         if (value instanceof Uint8Array || Array.isArray(value)) {
           return sqlite3.bind_blob(stmt, i, value);
@@ -235,6 +238,16 @@ export function Factory(Module) {
     };
   })();
 
+  sqlite3.clear_bindings = (function() {
+    const fname = 'sqlite3_clear_bindings';
+    const f = Module.cwrap(fname, ...decl('n:n'));
+    return function(stmt) {
+      verifyStatement(stmt);
+      const result = f(stmt);
+      return check(fname, result, mapStmtToDB.get(stmt));
+    };
+  })();
+  
   sqlite3.close = (function() {
     const fname = 'sqlite3_close';
     const f = Module.cwrap(fname, ...decl('n:n'), { async });
@@ -637,8 +650,8 @@ export function Factory(Module) {
     };
     function adapt(f) {
       return f instanceof AsyncFunction ?
-        (async (_, iAction, p3, p4, p5, p6) => f(cvtArgs(_, iAction, p3, p4, p5, p6))) :
-        ((_, iAction, p3, p4, p5, p6) => f(cvtArgs(_, iAction, p3, p4, p5, p6)));
+        (async (_, iAction, p3, p4, p5, p6) => f(...cvtArgs(_, iAction, p3, p4, p5, p6))) :
+        ((_, iAction, p3, p4, p5, p6) => f(...cvtArgs(_, iAction, p3, p4, p5, p6)));
     }
 
     const result = Module.set_authorizer(db, adapt(xAuth), pApp);
@@ -666,7 +679,7 @@ export function Factory(Module) {
       const onFinally = [];
       try {
         // Encode SQL string to UTF-8.
-        const utf8 = new TextEncoder().encode(sql);
+        const utf8 = textEncoder.encode(sql);
 
         // Copy encoded string to WebAssembly memory. The SQLite docs say
         // zero-termination is a minor optimization so add room for that.
@@ -741,6 +754,32 @@ export function Factory(Module) {
       return check(fname, rc, mapStmtToDB.get(stmt), [SQLite.SQLITE_ROW, SQLite.SQLITE_DONE]);
     };
   })();
+
+  sqlite3.commit_hook = function(db, xCommitHook) {
+    verifyDatabase(db);
+    Module.commit_hook(db, xCommitHook);
+  };
+
+  sqlite3.update_hook = function(db, xUpdateHook) {
+    verifyDatabase(db);
+
+    // Convert SQLite callback arguments to JavaScript-friendly arguments.
+    function cvtArgs(iUpdateType, dbName, tblName, lo32, hi32) {
+      return [
+        iUpdateType,
+        Module.UTF8ToString(dbName),
+        Module.UTF8ToString(tblName),
+		cvt32x2ToBigInt(lo32, hi32)
+      ];
+    };
+    function adapt(f) {
+      return f instanceof AsyncFunction ?
+        (async (iUpdateType, dbName, tblName, lo32, hi32) => f(...cvtArgs(iUpdateType, dbName, tblName, lo32, hi32))) :
+        ((iUpdateType, dbName, tblName, lo32, hi32) => f(...cvtArgs(iUpdateType, dbName, tblName, lo32, hi32)));
+    }
+
+    Module.update_hook(db, adapt(xUpdateHook));
+  };;
 
   sqlite3.value = function(pValue) {
     const type = sqlite3.value_type(pValue);

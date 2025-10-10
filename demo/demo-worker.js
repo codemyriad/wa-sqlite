@@ -13,6 +13,7 @@ const BUILDS = new Map([
  * @property {string} name
  * @property {string} vfsModule path of the VFS module
  * @property {string} [vfsClassName] name of the VFS class
+ * @property {string} [vfsName] name of the VFS instance
  * @property {object} [vfsOptions] VFS constructor arguments
  */
 
@@ -33,6 +34,11 @@ const BUILDS = new Map([
     name: 'IDBBatchAtomicVFS',
     vfsModule: '../src/examples/IDBBatchAtomicVFS.js',
     vfsOptions: { lockPolicy: 'shared+hint' }
+  },
+  {
+    name: 'IDBMirrorVFS',
+    vfsModule: '../src/examples/IDBMirrorVFS.js',
+    vfsName: 'demo-mirror'
   },
   {
     name: 'OPFSAdaptiveVFS',
@@ -70,7 +76,7 @@ maybeReset().then(async () => {
   const config = VFS_CONFIGS.get(configName);
 
   const dbName = searchParams.get('dbName') ?? 'hello';
-  const vfsName = searchParams.get('vfsName') ?? 'demo';
+  const vfsName = searchParams.get('vfsName') ?? config.vfsName ?? 'demo';
 
   // Instantiate SQLite.
   const { default: moduleFactory } = await import(BUILDS.get(buildName));

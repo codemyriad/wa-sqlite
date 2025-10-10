@@ -1,11 +1,11 @@
-[![wa-sqlite CI](https://github.com/rhashimoto/wa-sqlite/actions/workflows/ci.yml/badge.svg?branch=breaking-changes)](https://github.com/rhashimoto/wa-sqlite/actions/workflows/ci.yml?branch=breaking-changes)
+[![wa-sqlite CI](https://github.com/rhashimoto/wa-sqlite/actions/workflows/ci.yml/badge.svg)](https://github.com/rhashimoto/wa-sqlite/actions/workflows/ci.yml)
 
 # wa-sqlite
 This is a WebAssembly build of SQLite with support for writing SQLite virtual filesystems completely in Javascript. This allows alternative browser storage options such as IndexedDB and Origin Private File System. Applications can opt to use either a synchronous or asynchronous (using Asyncify or JSPI) SQLite library build (an asynchronous build is required for asynchronous extensions).
 
 IndexedDB and several Origin Private File System virtual file systems are among the examples provided as proof of concept. A table comparing the different VFS classes is [here](https://github.com/rhashimoto/wa-sqlite/tree/master/src/examples#vfs-comparison).
 
-[Try the demo](https://rhashimoto.github.io/wa-sqlite/demo/?build=asyncify&config=IDBBatchAtomicVFS&reset) or run [benchmarks](https://rhashimoto.github.io/wa-sqlite/demo/benchmarks/?config=asyncify,IDBBatchAtomicVFS;default,AccessHandlePoolVFS;default,OPFSCoopSyncVFS;asyncify,OPFSAdaptiveVFS;asyncify,OPFSPermutedVFS) with a modern desktop web browser. More information is available in the [FAQ](https://github.com/rhashimoto/wa-sqlite/issues?q=is%3Aissue+label%3Afaq+), [discussion forums](https://github.com/rhashimoto/wa-sqlite/discussions), and [API reference](https://rhashimoto.github.io/wa-sqlite/docs/).
+[Try the demo](https://rhashimoto.github.io/wa-sqlite/demo/?build=asyncify&config=IDBBatchAtomicVFS&reset) or run [benchmarks](https://rhashimoto.github.io/wa-sqlite/demo/benchmarks/?config=asyncify,IDBBatchAtomicVFS;asyncify,IDBMirrorVFS;default,AccessHandlePoolVFS;default,OPFSCoopSyncVFS;asyncify,OPFSAdaptiveVFS;asyncify,OPFSPermutedVFS) with a modern desktop web browser. More information is available in the [FAQ](https://github.com/rhashimoto/wa-sqlite/issues?q=is%3Aissue+label%3Afaq+), [discussion forums](https://github.com/rhashimoto/wa-sqlite/discussions), and [API reference](https://rhashimoto.github.io/wa-sqlite/docs/).
 
 ## Build
 The primary motivation for this project is to enable additions to SQLite with only Javascript. Most developers should be able to use the pre-built artifacts in
@@ -19,7 +19,7 @@ If you do want to build yourself, here are the prerequisites:
 
 * Building on Debian Linux is known to work, compatibility with other platforms is unknown.
 * `yarn` - If you use a different package manager (e.g. `npm`) then file paths in the demo will need adjustment.
-* [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) 3.1.47+.
+* [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) 3.1.61+.
 * `curl`, `make`, `openssl`, `sed`, `tclsh`, `unzip`
 
 Here are the build steps:
@@ -64,10 +64,10 @@ To serve the demo directly from the source tree:
 
 The demo page provides access to databases on multiple VFS implementations. Query parameters on the demo page URL can be used to specify the configuration and initial state:
 
-| *Parameter* | *Purpose* | *Values* | *Default* |
+| Parameter | Purpose | Values | Default |
 |----|----|----|----|
 | build | Emscripten build type | default, asyncify, jspi | default |
-| config | select VFS | MemoryVFS, MemoryAsyncVFS, IDBBatchAtomicVFS, AccessHandlePoolVFS, OPFSAdaptiveVFS, OPFSCoopSyncVFS, OPFSPermutedVFS | uses SQLite internal memory |
+| config | select VFS | MemoryVFS, MemoryAsyncVFS, IDBBatchAtomicVFS, IDBMirrorVFS, AccessHandlePoolVFS, OPFSAdaptiveVFS, OPFSAnyContextVFS, OPFSCoopSyncVFS, OPFSPermutedVFS | uses SQLite internal memory |
 | reset | clear persistent storage | | |
 
 For convenience, if any text region is selected in the editor, only that region will be executed. In addition, the editor contents are restored across page reloads using browser localStorage.

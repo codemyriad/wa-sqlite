@@ -1,6 +1,6 @@
 # dependencies
-SQLITE_VERSION = version-3.45.0
-SQLITE_TARBALL_URL = https://www.sqlite.org/src/tarball/sqlite.tar.gz?r=${SQLITE_VERSION}
+SQLITE_VERSION = version-3.50.1
+SQLITE_TARBALL_URL = https://www.sqlite.org/src/tarball/$(SQLITE_VERSION)/sqlite.tar.gz
 
 EXTENSION_FUNCTIONS = extension-functions.c
 EXTENSION_FUNCTIONS_URL = https://www.sqlite.org/contrib/download/extension-functions.c?get=25
@@ -18,6 +18,7 @@ CFILES = \
 	main.c \
 	libauthorizer.c \
 	libfunction.c \
+	libhook.c \
 	libprogress.c \
 	libvfs.c \
 	$(CFILES_EXTRA)
@@ -25,6 +26,7 @@ CFILES = \
 JSFILES = \
 	src/libauthorizer.js \
 	src/libfunction.js \
+	src/libhook.js \
 	src/libprogress.js \
 	src/libvfs.js
 
@@ -38,7 +40,7 @@ vpath %.c $(dir.crsql)
 EXPORTED_FUNCTIONS = src/exported_functions.json
 EXPORTED_RUNTIME_METHODS = src/extra_exported_runtime_methods.json
 ASYNCIFY_IMPORTS = src/asyncify_imports.json
-ASYNCIFY_EXPORTS = src/asyncify_exports.json
+JSPI_EXPORTS = src/jspi_exports.json
 
 # intermediate files
 RS_LIB = crsql_bundle
@@ -72,6 +74,7 @@ EMFLAGS_COMMON = \
 	-s INVOKE_RUN \
 	-s ENVIRONMENT="web,worker" \
 	-s STACK_SIZE=512KB \
+	-s WASM_BIGINT=0 \
 	$(EMFLAGS_EXTRA)
 
 EMFLAGS_DEBUG = \
@@ -92,6 +95,7 @@ EMFLAGS_LIBRARIES = \
 	--js-library src/libadapters.js \
 	--post-js src/libauthorizer.js \
 	--post-js src/libfunction.js \
+	--post-js src/libhook.js \
 	--post-js src/libprogress.js \
 	--post-js src/libvfs.js
 
@@ -108,9 +112,9 @@ EMFLAGS_ASYNCIFY_DIST = \
 	-s ASYNCIFY_STACK_SIZE=16384
 
 EMFLAGS_JSPI = \
-	-s ASYNCIFY=2 \
+	-s JSPI \
 	-s ASYNCIFY_IMPORTS=@src/asyncify_imports.json \
-	-s ASYNCIFY_EXPORTS=@src/asyncify_exports.json
+	-s JSPI_EXPORTS=@src/jspi_exports.json
 
 # NOTE: The tests expect the default page size to be 8192 (not 4096 like the sqlite3 default)
 WASQLITE_EXTRA_DEFINES = \

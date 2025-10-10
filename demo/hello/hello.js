@@ -4,20 +4,26 @@
 // to use. Note that an asynchronous VFS requires an asynchronous build
 // (Asyncify or JSPI). As of 2024-05-26, JSPI is only available behind
 // a flag on Chromium browsers.
-// import SQLiteESMFactory from '../dist/wa-sqlite.mjs';
+// import SQLiteESMFactory from '../../dist/wa-sqlite.mjs';
 import SQLiteESMFactory from '../../dist/wa-sqlite-async.mjs';
-// import SQLiteESMFactory from '../dist/wa-sqlite-jspi.mjs';
+// import SQLiteESMFactory from '../../dist/wa-sqlite-jspi.mjs';
 
 // Uncomment one of the following imports to choose a VFS. Note that an
 // asynchronous VFS requires an asynchronous build, and an VFS using
 // FileSystemSyncAccessHandle (generally any OPFS VFS) will run only
 // in a Worker.
+//
+// Note that certain VFS classes cannot read each others' databases, e.g.
+// IDBBatchAtomicVFS and IDBMirrorVFS, OPFSPermutedVFS and any other OPFS
+// VFS. If you change this demo to use a different VFS, you may need to
+// clear the appropriate storage for things to work.
 import { IDBBatchAtomicVFS as MyVFS } from '../../src/examples/IDBBatchAtomicVFS.js';
+// import { IDBMirrorVFS as MyVFS } from '../../src/examples/IDBMirrorVFS.js';
+// import { AccessHandlePoolVFS as MyVFS } from '../../src/examples/AccessHandlePoolVFS.js';
+// import { OPFSAdaptiveVFS as MyVFS } from '../../src/examples/OPFSAdaptiveVFS.js';
 // import { OPFSAnyContextVFS as MyVFS } from '../../src/examples/OPFSAnyContextVFS.js';
-// import { AccessHandlePoolVFS as MyVFS } from '../src/examples/AccessHandlePoolVFS.js';
-// import { OPFSAdaptiveVFS as MyVFS } from '../src/examples/OPFSAdaptiveVFS.js';
-// import { OPFSCoopSyncVFS as MyVFS } from '../src/examples/OPFSCoopSyncVFS.js';
-// import { OPFSPermutedVFS as MyVFS } from '../src/examples/OPFSPermutedVFS.js';
+// import { OPFSCoopSyncVFS as MyVFS } from '../../src/examples/OPFSCoopSyncVFS.js';
+// import { OPFSPermutedVFS as MyVFS } from '../../src/examples/OPFSPermutedVFS.js';
 
 import * as SQLite from '../../src/sqlite-api.js';
 
